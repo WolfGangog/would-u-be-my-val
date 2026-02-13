@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Will You Be My Valentine? ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-deep:#0b0303;
+            --burgundy:#3b0008;
+            --deep-red:#6b0011;
+            --gold-1:#ffd97d;
+            --gold-2:#d4af37;
+            --rose-gold:linear-gradient(135deg,#ff8aa0,#ffd1c4);
+            --glass: rgba(255,255,255,0.04);
+            --glass-2: rgba(255,255,255,0.06);
+        }
+
+        /* Mobile-first base */
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            font-family:'Playfair Display', Georgia, serif;
+            background: radial-gradient(1200px 600px at 10% 20%, rgba(160,10,30,0.12), transparent),
+                                    linear-gradient(180deg,var(--bg-deep) 0%, #150509 60%);
+            color:#f6f0ee;
+            overflow:hidden;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+        }
+
+        /* Canvas layers full screen */
+        .stage{
+            position:fixed;inset:0;z-index:0;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+        }
+
+        #background{z-index:1}
+        #reflection{z-index:2}
+        #particles{z-index:2}
+        #text-layer{z-index:3}
+        #glow-layer{z-index:4;mix-blend-mode:screen}
+        #shimmer{z-index:5;mix-blend-mode:screen}
+        #heart-3d{z-index:6;display:none}
+        
+        /* Soft golden rays */
+        .gold-rays{
+            position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:screen;opacity:0.5;
+            background: radial-gradient(800px 1200px at 50% 10%, rgba(212,175,55,0.08), transparent);
+            filter: blur(40px);
+            animation: drift 15s linear infinite;
+        }
+
+        @keyframes drift{0%{transform:translateY(-10px)}50%{transform:translateY(10px)}100%{transform:translateY(-10px)}}
+
+        /* Center cinematic card */
+        .hero{
+            position:relative;z-index:5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem 1.5rem;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .hero.hidden{
+            opacity:0;visibility:hidden;pointer-events:none;
+        }
+
+        .card{
+            width:min(880px,94%);
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.12));
+            border-radius:18px;padding:3.5rem;backdrop-filter: blur(8px) saturate(120%);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+            border:1px solid rgba(212,175,55,0.06);
+            text-align:center;transition:transform 0.8s cubic-bezier(.2,.8,.2,1),opacity 0.8s;
+            transform: translateY(0);
+        }
+
+        @media(min-width:900px){.card{padding:4.5rem}}
+
+        h1{
+            font-family:'Great Vibes', 'Playfair Display', serif;
+            font-size:clamp(2.2rem,6vw,4.6rem);
+            color:var(--gold-1);margin:0 0 1rem;
+            text-shadow: 0 4px 20px rgba(212,175,55,0.18), 0 1px 0 rgba(0,0,0,0.6);
+            opacity:0;animation:fadeUp 1.4s ease-out 0.6s forwards;
+        }
+
+        h1::after{content:'';position:absolute;left:50%;transform:translateX(-50%);}
+
+        .subtext{
+            margin:0 auto 1.8rem;max-width:720px;color:#f5eae6;font-size:clamp(0.95rem,2.4vw,1.25rem);line-height:1.6;opacity:0;animation:fadeUp 1s ease-out 1.1s forwards;
+        }
+
+        @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Buttons */
+        .actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp 1s ease-out 1.5s forwards}
+
+        .btn{
+            min-width:170px;padding:14px 22px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);
+            cursor:pointer;font-weight:700;letter-spacing:0.6px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.55), 0 2px 0 rgba(255,255,255,0.02) inset;
+            transition:transform .28s ease, box-shadow .28s ease, opacity .28s;
+            backdrop-filter: blur(6px);
+        }
+
+        .btn:active{transform:translateY(2px)}
+
+        .btn-gold{
+            background:linear-gradient(180deg,var(--gold-1),var(--gold-2));color:#2b1200;border:none;
+            box-shadow:0 10px 40px rgba(212,175,55,0.18), 0 2px 0 rgba(0,0,0,0.55);
+        }
+
+        .btn-rose{
+            background:linear-gradient(180deg,#ffb1b9,#ff7b8c);color:#2b0a0f;border:none;
+            box-shadow:0 10px 40px rgba(255,130,145,0.12);
+        }
+
+        .btn:hover{transform:translateY(-6px);opacity:0.98}
+
+        /* Petals (soft) */
+        .petal{
+            position:fixed;top:-10vh;left:0;z-index:2;pointer-events:none;opacity:.9;filter:blur(0.6px)
+        }
+
+        /* Accessibility: reduce motion */
+        @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition:none!important}}
+
+        .info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(0, 200, 255, 0.5);
+            font-size: 11px;
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            display: none;
+        }
+
+        .info.show {
+            display: block;
+        }
+
+        audio {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            opacity: 0.6;
+        }
+
+        #particle-count {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: rgba(0, 200, 255, 0.4);
+            font-size: 11px;
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+            display: none;
+        }
+
+        #particle-count.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stage" id="stage">
+        <div class="gold-rays" aria-hidden="true"></div>
+        <canvas id="background"></canvas>
+        <canvas id="reflection"></canvas>
+        <canvas id="particles"></canvas>
+        <canvas id="text-layer"></canvas>
+        <canvas id="glow-layer"></canvas>
+        <canvas id="shimmer"></canvas>
+        <canvas id="heart-3d"></canvas>
+    </div>
+
+    <main class="hero" id="hero">
+        <section class="card" role="dialog" aria-labelledby="proposal-title">
+            <h1 id="proposal-title">Will You Be My Valentine? ❤️</h1>
+            <p class="subtext">In the quiet between heartbeats I find you — a soft light, a steady hand. Today I lay down my every fear and every future desire and ask only this: will you share the rest of this story with me? You are my home, my wonder, my forever.</p>
+
+            <div class="actions">
+                <button class="btn btn-gold" id="yesBtn">Yes 💍</button>
+                <button class="btn btn-rose" id="ofcBtn">Of Course 😘</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="info" id="info">
+        ✨ NEON CINEMATIC ROMANCE | 💙 ELECTRIC LOVE
+    </div>
+
+    <div id="particle-count">PARTICLES: 0</div>
+
+    <audio id="bgm" loop>
+        <source src="One Letter Love.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // ==================== ELEMENT SETUP ====================
+        const yesBtn = document.getElementById('yesBtn');
+        const ofcBtn = document.getElementById('ofcBtn');
+        const hero = document.getElementById('hero');
+        const bgm = document.getElementById('bgm');
+        const infoDiv = document.getElementById('info');
+        const particleCountDiv = document.getElementById('particle-count');
+
+        function tryPlayMusic(){
+            bgm.play().catch(()=>{});
+        }
+        tryPlayMusic();
+
+        // ==================== CANVAS SETUP ====================
+        const bgCanvas = document.getElementById('background');
+        const reflectionCanvas = document.getElementById('reflection');
+        const particleCanvas = document.getElementById('particles');
+        const textCanvas = document.getElementById('text-layer');
+        const glowCanvas = document.getElementById('glow-layer');
+        const shimmerCanvas = document.getElementById('shimmer');
+        const heartCanvas = document.getElementById('heart-3d');
+
+        const bgCtx = bgCanvas.getContext('2d');
+        const reflectionCtx = reflectionCanvas.getContext('2d');
+        const pCtx = particleCanvas.getContext('2d');
+        const tCtx = textCanvas.getContext('2d');
+        const gCtx = glowCanvas.getContext('2d');
+        const sCtx = shimmerCanvas.getContext('2d');
+        const hCtx = heartCanvas.getContext('2d');
+
+        const dpr = window.devicePixelRatio || 1;
+
+        function resizeCanvases() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            [bgCanvas, reflectionCanvas, particleCanvas, textCanvas, glowCanvas, shimmerCanvas, heartCanvas].forEach(canvas => {
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+                canvas.style.width = w + 'px';
+                canvas.style.height = h + 'px';
+            });
+
+            bgCtx.scale(dpr, dpr);
+            reflectionCtx.scale(dpr, dpr);
+            pCtx.scale(dpr, dpr);
+            tCtx.scale(dpr, dpr);
+            gCtx.scale(dpr, dpr);
+            sCtx.scale(dpr, dpr);
+            hCtx.scale(dpr, dpr);
+        }
+
+        resizeCanvases();
+        window.addEventListener('resize', () => {
+            resizeCanvases();
+            fontSize = Math.round(Math.max(28, Math.min(220, window.innerWidth * 0.14)));
+            generateTextPoints();
+        });
+
+        // ==================== PARTICLE SYSTEM ====================
+        class NeonParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.startX = x;
+                this.startY = y;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = -Math.random() * 15 - 6;
+                this.size = Math.random() * 1.5 + 0.3;
+                this.life = 1;
+                this.targetX = null;
+                this.targetY = null;
+                this.focused = false;
+                this.brightness = Math.random() * 0.6 + 0.4;
+                this.wobble = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = Math.random() * 0.4 + 0.2;
+            }
+
+            update() {
+                this.wobble += this.wobbleSpeed;
+
+                if (this.targetX !== null && this.targetY !== null) {
+                    const dx = this.targetX - this.x;
+                    const dy = this.targetY - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > 3) {
+                        const angle = Math.atan2(dy, dx);
+                        const attractForce = Math.min(dist / 15, 15);
+                        this.vx += Math.cos(angle) * attractForce * 1.5;
+                        this.vy += Math.sin(angle) * attractForce * 1.5;
+                        this.focused = true;
+                    } else {
+                        this.vx *= 0.92;
+                        this.vy *= 0.92;
+                        this.focused = true;
+                    }
+                } else {
+                    this.vy += 0.015;
+                    this.vx *= 0.98;
+                }
+
+                this.vx += Math.sin(this.wobble) * 0.02;
+                this.vy += Math.cos(this.wobble) * 0.015;
+
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > 3) {
+                    this.vx = (this.vx / speed) * 3;
+                    this.vy = (this.vy / speed) * 3;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.brightness = Math.min(1, this.brightness + 0.008);
+            }
+
+            draw(ctx) {
+                const pulse = Math.sin(Date.now() * 0.003 + this.x * 0.01) * 0.3 + 0.7;
+                const alpha = this.life * this.brightness * pulse;
+
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
+                gradient.addColorStop(0, `rgba(255, 215, 0, ${alpha * 1})`);
+                gradient.addColorStop(0.4, `rgba(212, 175, 55, ${alpha * 0.6})`);
+                gradient.addColorStop(1, `rgba(255, 150, 0, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = `rgba(0, 200, 255, ${alpha * 0.25})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let particles = [];
+        const particleCount = Math.max(1500, Math.floor(window.innerWidth / 2.5));
+
+        function initializeParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + Math.random() * 200;
+                particles.push(new NeonParticle(x, y));
+            }
+        }
+
+        // ==================== TEXT FORMATION ====================
+        const text = "I Love You";
+        // Responsive font sizing for the text canvas
+        let fontSize = Math.round(Math.max(36, Math.min(220, window.innerWidth * 0.14)));
+        let textPoints = [];
+
+        function generateTextPoints() {
+            textPoints = [];
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // account for devicePixelRatio so text measurements are crisp on high-DPI screens
+            tempCanvas.width = Math.round(window.innerWidth * dpr);
+            tempCanvas.height = Math.round(window.innerHeight * dpr);
+            tempCanvas.style.width = window.innerWidth + 'px';
+            tempCanvas.style.height = window.innerHeight + 'px';
+            tempCtx.scale(dpr, dpr);
+
+            tempCtx.font = `italic bold ${fontSize}px Georgia, serif`;
+            tempCtx.fillStyle = 'white';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillText(text, window.innerWidth / 2, window.innerHeight / 2);
+
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i + 3] > 128) {
+                    const pixelIndex = i / 4;
+                    const xPx = (pixelIndex % tempCanvas.width);
+                    const yPx = Math.floor(pixelIndex / tempCanvas.width);
+                    // convert back to CSS pixels
+                    const x = xPx / dpr;
+                    const y = yPx / dpr;
+                    textPoints.push({ x, y });
+                }
+            }
+        }
+
+        generateTextPoints();
+
+        function assignParticlesToText() {
+            const step = Math.ceil(textPoints.length / particles.length);
+            for (let i = 0; i < particles.length && i * step < textPoints.length; i++) {
+                const point = textPoints[i * step];
+                particles[i].targetX = point.x;
+                particles[i].targetY = point.y;
+            }
+        }
+
+        // ==================== BACKGROUND ====================
+        function drawPureBlackBackground() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            bgCtx.fillStyle = '#000000';
+            bgCtx.fillRect(0, 0, w, h);
+
+            const vignetteGradient = bgCtx.createRadialGradient(w / 2, h / 2, w * 0.2, w / 2, h / 2, w * 1.2);
+            vignetteGradient.addColorStop(0, 'rgba(0, 30, 60, 0)');
+            vignetteGradient.addColorStop(1, 'rgba(0, 10, 30, 0.4)');
+            bgCtx.fillStyle = vignetteGradient;
+            bgCtx.fillRect(0, 0, w, h);
+        }
+
+        // ==================== NEON TEXT WITH FLICKER ====================
+        function drawNeonText() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            const flicker = Math.random() > 0.92 ? 0.3 : 1;
+            const timeBased = Math.sin(Date.now() * 0.002) * 0.15 + 0.85;
+            const finalAlpha = flicker * timeBased;
+
+            tCtx.clearRect(0, 0, w, h);
+
+            tCtx.font = `italic bold ${fontSize}px Georgia, serif`;
+            tCtx.textAlign = 'center';
+            tCtx.textBaseline = 'middle';
+
+            tCtx.fillStyle = `rgba(0, 80, 200, ${finalAlpha * 0.4})`;
+            tCtx.shadowColor = `rgba(0, 150, 255, ${finalAlpha * 0.6})`;
+            tCtx.shadowBlur = 40;
+            tCtx.shadowOffsetX = 0;
+            tCtx.shadowOffsetY = 0;
+            tCtx.fillText(text, w / 2, h / 2);
+
+            tCtx.fillStyle = `rgba(0, 150, 255, ${finalAlpha * 0.7})`;
+            tCtx.shadowBlur = 25;
+            tCtx.shadowColor = `rgba(0, 200, 255, ${finalAlpha * 0.8})`;
+            tCtx.fillText(text, w / 2, h / 2);
+
+            tCtx.fillStyle = `rgba(0, 255, 255, ${finalAlpha})`;
+            tCtx.shadowColor = `rgba(100, 255, 255, ${finalAlpha})`;
+            tCtx.shadowBlur = 15;
+            tCtx.fillText(text, w / 2, h / 2 - 2);
+
+            tCtx.fillStyle = `rgba(150, 255, 255, ${finalAlpha * 0.6})`;
+            tCtx.shadowBlur = 8;
+            tCtx.shadowColor = 'rgba(200, 255, 255, 0)';
+            tCtx.fillText(text, w / 2, h / 2 - 4);
+        }
+
+        // ==================== GLOW LAYER ====================
+        function drawGlowHalo() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            gCtx.clearRect(0, 0, w, h);
+
+            const haloSize = 400 + Math.sin(Date.now() * 0.0015) * 50;
+            const gradient = gCtx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, haloSize);
+            gradient.addColorStop(0, 'rgba(0, 200, 255, 0.2)');
+            gradient.addColorStop(0.4, 'rgba(0, 150, 255, 0.1)');
+            gradient.addColorStop(1, 'rgba(0, 100, 255, 0)');
+
+            gCtx.fillStyle = gradient;
+            gCtx.fillRect(0, 0, w, h);
+        }
+
+        // ==================== SPARKLE EFFECTS ====================
+        class Sparkle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.life = 1;
+                this.maxLife = Math.random() * 0.8 + 0.5;
+                this.size = Math.random() * 2 + 0.5;
+                this.opacity = Math.random() * 0.8 + 0.4;
+            }
+
+            update() {
+                this.life -= 0.02;
+            }
+
+            draw(ctx) {
+                if (this.life <= 0) return;
+
+                const alpha = this.life * this.opacity;
+
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 4);
+                gradient.addColorStop(0, `rgba(100, 255, 255, ${alpha})`);
+                gradient.addColorStop(0.6, `rgba(0, 200, 255, ${alpha * 0.5})`);
+                gradient.addColorStop(1, `rgba(0, 150, 255, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = `rgba(200, 255, 255, ${alpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let sparkles = [];
+
+        function createSparkle() {
+            const x = window.innerWidth / 2 + (Math.random() - 0.5) * 600;
+            const y = window.innerHeight / 2 + (Math.random() - 0.5) * 400;
+            sparkles.push(new Sparkle(x, y));
+        }
+
+        function drawSparkles() {
+            sCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            sparkles = sparkles.filter(s => s.life > 0);
+            sparkles.forEach(s => {
+                s.update();
+                s.draw(sCtx);
+            });
+
+            if (Math.random() > 0.92) {
+                createSparkle();
+            }
+        }
+
+        // ==================== REFLECTION FLOOR ====================
+        function drawReflectiveGround() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            reflectionCtx.clearRect(0, 0, w, h);
+
+            const floorY = h / 2 + fontSize / 2 + 80;
+
+            const reflectionGradient = reflectionCtx.createLinearGradient(0, floorY, 0, h);
+            reflectionGradient.addColorStop(0, 'rgba(0, 150, 255, 0.2)');
+            reflectionGradient.addColorStop(0.2, 'rgba(0, 200, 255, 0.1)');
+            reflectionGradient.addColorStop(0.5, 'rgba(0, 100, 200, 0.05)');
+            reflectionGradient.addColorStop(1, 'rgba(0, 50, 150, 0)');
+
+            reflectionCtx.fillStyle = reflectionGradient;
+            reflectionCtx.fillRect(0, floorY, w, h - floorY);
+
+            reflectionCtx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+            reflectionCtx.lineWidth = 3;
+            reflectionCtx.beginPath();
+            reflectionCtx.moveTo(0, floorY);
+            reflectionCtx.lineTo(w, floorY);
+            reflectionCtx.stroke();
+
+            reflectionCtx.strokeStyle = 'rgba(0, 200, 255, 0.15)';
+            reflectionCtx.lineWidth = 8;
+            reflectionCtx.beginPath();
+            reflectionCtx.moveTo(0, floorY);
+            reflectionCtx.lineTo(w, floorY);
+            reflectionCtx.stroke();
+        }
+
+        // ==================== 3D HEART GENERATION ====================
+        function generateHeart3D(scale = 1) {
+            const points = [];
+            
+            for (let u = 0; u <= Math.PI * 2; u += Math.PI / 16) {
+                for (let v = 0; v <= Math.PI * 1.5; v += Math.PI / 12) {
+                    const x = 16 * Math.sin(u) * Math.sin(u) * Math.sin(u);
+                    const y = 13 * Math.cos(u) - 5 * Math.cos(2*u) - 2 * Math.cos(3*u) - Math.cos(4*u);
+                    const z = 5 * Math.sin(v) - 5;
+                    
+                    const variation = Math.sin(u * 3) * 0.3;
+                    points.push({
+                        x: (x * scale * 0.8 + variation) * 2,
+                        y: (y * scale * 0.8 + variation) * 2,
+                        z: (z * scale * 0.6) * 2,
+                        ox: x,
+                        oy: y,
+                        oz: z
+                    });
+                }
+            }
+            return points;
+        }
+
+        let heartPoints = generateHeart3D(1);
+        let heartRotationX = 0;
+        let heartRotationY = 0;
+        let heartRotationZ = 0;
+        let showingHeart = false;
+
+        function rotatePoint3D(p, rx, ry, rz) {
+            let x = p.x, y = p.y, z = p.z;
+            
+            let t = y;
+            y = t * Math.cos(rx) - z * Math.sin(rx);
+            z = t * Math.sin(rx) + z * Math.cos(rx);
+            
+            t = x;
+            x = t * Math.cos(ry) + z * Math.sin(ry);
+            z = -t * Math.sin(ry) + z * Math.cos(ry);
+            
+            t = x;
+            x = t * Math.cos(rz) - y * Math.sin(rz);
+            y = t * Math.sin(rz) + y * Math.cos(rz);
+            
+            return { x, y, z };
+        }
+
+        function drawHeart3D() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            hCtx.clearRect(0, 0, w, h);
+            
+            heartRotationX += 0.25;
+            heartRotationY += 0.35;
+            heartRotationZ += 0.1;
+            
+            // Responsive scale based on viewport
+            const baseScale = Math.min(w, h) / 1200;
+            const heartSize = 500 * baseScale;
+            
+            const projected = heartPoints.map(p => {
+                const rotated = rotatePoint3D(p, heartRotationX, heartRotationY, heartRotationZ);
+                const scale = heartSize / (150 + rotated.z);
+                return {
+                    x: w/2 + rotated.x * scale,
+                    y: h/2 + rotated.y * scale,
+                    z: rotated.z,
+                    scale: scale
+                };
+            });
+            
+            projected.forEach((proj, i) => {
+                const alpha = (proj.scale / 6) * 0.8;
+                
+                const glowGradient = hCtx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, 8);
+                glowGradient.addColorStop(0, `rgba(255, 215, 0, ${alpha * 0.5})`);
+                glowGradient.addColorStop(0.6, `rgba(212, 175, 55, ${alpha * 0.2})`);
+                glowGradient.addColorStop(1, `rgba(255, 150, 0, 0)`);
+                
+                hCtx.fillStyle = glowGradient;
+                hCtx.beginPath();
+                hCtx.arc(proj.x, proj.y, 8, 0, Math.PI * 2);
+                hCtx.fill();
+                
+                hCtx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+                hCtx.beginPath();
+                hCtx.arc(proj.x, proj.y, 2.5, 0, Math.PI * 2);
+                hCtx.fill();
+            });
+            
+            for (let i = 0; i < projected.length - 1; i++) {
+                if (Math.random() > 0.8) {
+                    const p1 = projected[i];
+                    const p2 = projected[i + 1];
+                    
+                    const distance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                    if (distance < 30) {
+                        const gradient = hCtx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+                        const alpha1 = (p1.scale / 6) * 0.3;
+                        const alpha2 = (p2.scale / 6) * 0.3;
+                        gradient.addColorStop(0, `rgba(212, 175, 55, ${alpha1})`);
+                        gradient.addColorStop(1, `rgba(255, 200, 0, ${alpha2})`);
+                        
+                        hCtx.strokeStyle = gradient;
+                        hCtx.lineWidth = 1;
+                        hCtx.beginPath();
+                        hCtx.moveTo(p1.x, p1.y);
+                        hCtx.lineTo(p2.x, p2.y);
+                        hCtx.stroke();
+                    }
+                }
+            }
+            
+            const haloGradient = hCtx.createRadialGradient(w/2, h/2, 0, w/2, h/2, 250);
+            haloGradient.addColorStop(0, 'rgba(255, 215, 0, 0.15)');
+            haloGradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+            hCtx.fillStyle = haloGradient;
+            hCtx.fillRect(0, 0, w, h);
+        }
+
+        // ==================== ANIMATION LOOP ====================
+        let startTime = Date.now();
+        let particleFormationStartTime = null;
+        let textFadeStartTime = null;
+        let animationActive = false;
+
+        function animate() {
+            if (!animationActive) return;
+            
+            const elapsed = (Date.now() - startTime) / 1000;
+
+            if (elapsed > 0.05 && particleFormationStartTime === null) {
+                particleFormationStartTime = elapsed;
+                assignParticlesToText();
+            }
+
+            if (elapsed > 0.25 && !showingHeart) {
+                showingHeart = true;
+                textFadeStartTime = elapsed;
+                heartCanvas.style.display = 'block';
+            }
+
+            drawPureBlackBackground();
+            drawReflectiveGround();
+
+            particles.forEach(p => {
+                p.update();
+                p.draw(pCtx);
+            });
+
+            if (!showingHeart) {
+                drawNeonText();
+            } else {
+                const fadeDuration = 0.1;
+                const fadeProgress = Math.min(1, (elapsed - textFadeStartTime) / fadeDuration);
+                tCtx.globalAlpha = 1 - fadeProgress;
+                drawNeonText();
+                tCtx.globalAlpha = 1;
+            }
+
+            drawGlowHalo();
+            drawSparkles();
+
+            if (showingHeart) {
+                drawHeart3D();
+            }
+
+            const activeParticles = particles.filter(p => p.focused || elapsed < 1.5).length;
+            particleCountDiv.textContent = `PARTICLES: ${activeParticles}`;
+
+            requestAnimationFrame(animate);
+        }
+
+        // ==================== CELEBRATION FUNCTION ====================
+        function celebrate() {
+            hero.classList.add('hidden');
+            infoDiv.classList.add('show');
+            particleCountDiv.classList.add('show');
+            
+            if (!animationActive) {
+                animationActive = true;
+                initializeParticles();
+                startTime = Date.now();
+                particleFormationStartTime = null;
+                textFadeStartTime = null;
+                showingHeart = false;
+                heartCanvas.style.display = 'none';
+                animate();
+                tryPlayMusic();
+                
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => createSparkle(), i * 300);
+                }
+            }
+        }
+
+        yesBtn.addEventListener('click', celebrate);
+        ofcBtn.addEventListener('click', celebrate);
+
+        // Attempt audio autoplay fallback
+        ['click','touchstart','keydown'].forEach(evt=>document.addEventListener(evt, ()=>{ tryPlayMusic(); }, {once:true}))
+    </script>
+
+</body>
+</html>
